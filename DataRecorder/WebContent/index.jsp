@@ -5,8 +5,6 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-<script src="https://d3js.org/d3-hierarchy.v1.min.js"></script>
-<svg width="960" height="600"></svg>
 <title>Data Recorder</title>
 <%@include file="style.jsp"%>
 </head>
