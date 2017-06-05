@@ -1,6 +1,16 @@
 package com.gagarwa.ai.recorder.structure;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Scanner;
 import java.util.TreeMap;
+
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
+import javax.json.JsonWriter;
 
 /**
  * The recorder and manager of the data.
@@ -20,6 +30,7 @@ public class Recorder {
 	public Recorder() {
 		StringComparator c = new StringComparator();
 		recorder = new TreeMap<String, Cell>(c);
+		// deserialize();
 	}
 
 	/**
@@ -29,8 +40,10 @@ public class Recorder {
 	 *            the cell data
 	 */
 	public void input(String data) {
-		if (recorder.get(data) == null)
+		if (recorder.get(data) == null) {
 			recorder.put(data, new Cell(data));
+			serialize();
+		}
 	}
 
 	/**
@@ -56,6 +69,7 @@ public class Recorder {
 
 		clink.addDCell(cmain);
 		cmain.addDCell(clink);
+		serialize();
 	}
 
 	/**
@@ -89,6 +103,7 @@ public class Recorder {
 		clink.addTriDCon(cmain, cctr);
 		cmain.addTriDCon(clink, cctr);
 		cctr.addTriCon(clink, cmain);
+		serialize();
 	}
 
 	/**
@@ -103,6 +118,42 @@ public class Recorder {
 		if (c == null)
 			return "No Data Discovered!";
 		return c.toString();
+	}
+
+	/**
+	 * Serializes the recorder information to "data.csv".
+	 */
+	private void serialize() {
+		try (FileOutputStream fos = new FileOutputStream(new File("data.json"));
+				JsonWriter writer = Json.createWriter(fos)) {
+			JsonObject cells = Json.createObjectBuilder().build();
+			cells.putAll(recorder);
+
+			JsonArray dlinks = Json.createArrayBuilder().build();
+			for (Cell e : recorder.values())
+				dlinks.addAll(e.getDCon());
+
+			JsonArray links = Json.createArrayBuilder().build();
+			for (Cell e : recorder.values())
+				links.addAll(e.getCon());
+
+			writer.writeObject(cells);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Deserializes the recorder information in "data.csv" to the recorder.
+	 */
+	private void deserialize() {
+		try (Scanner scanner = new Scanner(new File("/WebContect/data.csv"))) {
+			while (scanner.hasNextLine()) {
+
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
 	}
 
 }

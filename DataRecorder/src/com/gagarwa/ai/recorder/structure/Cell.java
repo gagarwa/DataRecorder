@@ -2,12 +2,14 @@ package com.gagarwa.ai.recorder.structure;
 
 import java.util.ArrayList;
 
+import javax.json.JsonValue;
+
 /**
  * The cell to hold one single piece of data as a recording tool.
  *
  * @author Gitesh Agarwal
  */
-public class Cell {
+public class Cell implements JsonValue {
 
 	/** The list of connected cells. */
 	private ArrayList<Cell> con;
@@ -28,6 +30,16 @@ public class Cell {
 		con = new ArrayList<Cell>();
 		dcon = new ArrayList<Cell>();
 		this.data = data;
+	}
+
+	/**
+	 * Returns the type of JSON value (JSON Object).
+	 *
+	 * @return the type of JSON value
+	 */
+	@Override
+	public ValueType getValueType() {
+		return ValueType.OBJECT;
 	}
 
 	/**
