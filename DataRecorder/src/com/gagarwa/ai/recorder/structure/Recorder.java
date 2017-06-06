@@ -1,12 +1,9 @@
 package com.gagarwa.ai.recorder.structure;
 
-import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
-import java.util.Scanner;
 import java.util.TreeMap;
 
 import javax.json.Json;
@@ -131,8 +128,7 @@ public class Recorder {
 	 * Serializes the recorder information to "data.csv".
 	 */
 	private void serialize() {
-		try (FileOutputStream fos = new FileOutputStream(new File("data.json"));
-				JsonWriter writer = Json.createWriter(fos)) {
+		try (FileOutputStream fos = new FileOutputStream("data.json"); JsonWriter writer = Json.createWriter(fos)) {
 			JsonBuilderFactory factory = Json.createBuilderFactory(null);
 			JsonArrayBuilder builder = factory.createArrayBuilder();
 			for (String e : recorder.keySet())
@@ -160,6 +156,7 @@ public class Recorder {
 			JsonObject data = factory.createObjectBuilder().add("cells", cells).add("dlinks", dlinks)
 					.add("links", links).build();
 			writer.writeObject(data);
+			writer.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -169,8 +166,7 @@ public class Recorder {
 	 * Deserializes the recorder information in "data.csv" to the recorder.
 	 */
 	private void deserialize() {
-		try (FileInputStream fis = new FileInputStream(new File("data.json"));
-				JsonReader reader = Json.createReader(fis)) {
+		try (FileInputStream fis = new FileInputStream("data.json"); JsonReader reader = Json.createReader(fis)) {
 			JsonObject data = reader.readObject();
 			JsonArray cells = data.getJsonArray("cells");
 			JsonObject dlinks = data.getJsonObject("dlinks");
@@ -193,6 +189,7 @@ public class Recorder {
 				for (JsonString s : conData)
 					recorder.get(e.toString()).addCell(recorder.get(s.getString()));
 			}
+			reader.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
