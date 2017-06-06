@@ -2,14 +2,12 @@ package com.gagarwa.ai.recorder.structure;
 
 import java.util.ArrayList;
 
-import javax.json.JsonValue;
-
 /**
  * The cell to hold one single piece of data as a recording tool.
  *
  * @author Gitesh Agarwal
  */
-public class Cell implements JsonValue {
+public class Cell {
 
 	/** The list of connected cells. */
 	private ArrayList<Cell> con;
@@ -30,16 +28,6 @@ public class Cell implements JsonValue {
 		con = new ArrayList<Cell>();
 		dcon = new ArrayList<Cell>();
 		this.data = data;
-	}
-
-	/**
-	 * Returns the type of JSON value (JSON Object).
-	 *
-	 * @return the type of JSON value
-	 */
-	@Override
-	public ValueType getValueType() {
-		return ValueType.OBJECT;
 	}
 
 	/**
@@ -140,12 +128,11 @@ public class Cell implements JsonValue {
 	}
 
 	/**
-	 * Returns the string value of the cell.
+	 * Returns the output of the cell.
 	 * 
-	 * @return the string value of the cell
+	 * @return the output
 	 */
-	@Override
-	public String toString() {
+	public String output() {
 		String s = data + "\n";
 		boolean connected = false;
 
@@ -174,6 +161,32 @@ public class Cell implements JsonValue {
 			}
 		}
 
+		return s;
+	}
+
+	/**
+	 * Returns the string value of the cell.
+	 * 
+	 * @return the string value
+	 */
+	@Override
+	public String toString() {
+		String s = data + " ";
+		s += "(Connections [";
+		if (dcon.isEmpty())
+			s += ", ";
+
+		for (Cell e : dcon)
+			s += e.getData() + ", ";
+		s = s.substring(0, s.length() - 2) + "])";
+
+		s += "(Links [";
+		if (con.isEmpty())
+			s += ", ";
+
+		for (Cell e : con)
+			s += e.getData() + ", ";
+		s = s.substring(0, s.length() - 2) + "])";
 		return s;
 	}
 

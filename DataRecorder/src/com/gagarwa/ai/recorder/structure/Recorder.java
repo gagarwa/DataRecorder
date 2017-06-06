@@ -1,15 +1,22 @@
 package com.gagarwa.ai.recorder.structure;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.List;
 import java.util.Scanner;
 import java.util.TreeMap;
 
 import javax.json.Json;
 import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
+import javax.json.JsonBuilderFactory;
 import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
+import javax.json.JsonReader;
+import javax.json.JsonString;
 import javax.json.JsonWriter;
 
 /**
@@ -30,7 +37,7 @@ public class Recorder {
 	public Recorder() {
 		StringComparator c = new StringComparator();
 		recorder = new TreeMap<String, Cell>(c);
-		// deserialize();
+		deserialize();
 	}
 
 	/**
@@ -117,7 +124,7 @@ public class Recorder {
 		Cell c = recorder.get(cell);
 		if (c == null)
 			return "No Data Discovered!";
-		return c.toString();
+		return c.output();
 	}
 
 	/**
@@ -126,18 +133,33 @@ public class Recorder {
 	private void serialize() {
 		try (FileOutputStream fos = new FileOutputStream(new File("data.json"));
 				JsonWriter writer = Json.createWriter(fos)) {
-			JsonObject cells = Json.createObjectBuilder().build();
-			cells.putAll(recorder);
+			JsonBuilderFactory factory = Json.createBuilderFactory(null);
+			JsonArrayBuilder builder = factory.createArrayBuilder();
+			for (String e : recorder.keySet())
+				builder.add(e);
+			JsonArray cells = builder.build();
 
-			JsonArray dlinks = Json.createArrayBuilder().build();
-			for (Cell e : recorder.values())
-				dlinks.addAll(e.getDCon());
+			JsonObjectBuilder obuilder = factory.createObjectBuilder();
+			for (Cell e : recorder.values()) {
+				JsonArrayBuilder cbuilder = factory.createArrayBuilder();
+				for (Cell c : e.getDCon())
+					cbuilder.add(c.getData());
+				obuilder.add(e.getData(), cbuilder.build());
+			}
+			JsonObject dlinks = obuilder.build();
 
-			JsonArray links = Json.createArrayBuilder().build();
-			for (Cell e : recorder.values())
-				links.addAll(e.getCon());
+			obuilder = factory.createObjectBuilder();
+			for (Cell e : recorder.values()) {
+				JsonArrayBuilder cbuilder = factory.createArrayBuilder();
+				for (Cell c : e.getCon())
+					cbuilder.add(c.getData());
+				obuilder.add(e.getData(), cbuilder.build());
+			}
+			JsonObject links = obuilder.build();
 
-			writer.writeObject(cells);
+			JsonObject data = factory.createObjectBuilder().add("cells", cells).add("dlinks", dlinks)
+					.add("links", links).build();
+			writer.writeObject(data);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -147,11 +169,31 @@ public class Recorder {
 	 * Deserializes the recorder information in "data.csv" to the recorder.
 	 */
 	private void deserialize() {
-		try (Scanner scanner = new Scanner(new File("/WebContect/data.csv"))) {
-			while (scanner.hasNextLine()) {
+		try (FileInputStream fis = new FileInputStream(new File("data.json"));
+				JsonReader reader = Json.createReader(fis)) {
+			JsonObject data = reader.readObject();
+			JsonArray cells = data.getJsonArray("cells");
+			JsonObject dlinks = data.getJsonObject("dlinks");
+			JsonObject links = data.getJsonObject("links");
 
+			List<JsonString> cellsData = cells.getValuesAs(JsonString.class);
+			for (JsonString e : cellsData)
+				recorder.put(e.getString(), new Cell(e.getString()));
+
+			for (String e : recorder.keySet()) {
+				JsonArray dcon = dlinks.getJsonArray(e);
+				List<JsonString> dconData = dcon.getValuesAs(JsonString.class);
+				for (JsonString s : dconData)
+					recorder.get(e).addDCell(recorder.get(s.getString()));
 			}
-		} catch (FileNotFoundException e) {
+
+			for (String e : recorder.keySet()) {
+				JsonArray con = links.getJsonArray(e);
+				List<JsonString> conData = con.getValuesAs(JsonString.class);
+				for (JsonString s : conData)
+					recorder.get(e.toString()).addCell(recorder.get(s.getString()));
+			}
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}

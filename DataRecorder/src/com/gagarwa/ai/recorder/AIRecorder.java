@@ -125,7 +125,7 @@ public class AIRecorder {
 					System.out.println(FORM_OUT);
 				}
 			} catch (Exception e) {
-				System.out.println(e.getMessage());
+				e.printStackTrace();
 			}
 		}
 
