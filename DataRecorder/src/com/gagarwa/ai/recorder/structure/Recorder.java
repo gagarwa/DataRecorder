@@ -16,6 +16,8 @@ import javax.json.JsonReader;
 import javax.json.JsonString;
 import javax.json.JsonWriter;
 
+import com.gagarwa.ai.recorder.structure.storage.DBRecorder;
+
 /**
  * The recorder and manager of the data.
  *
@@ -34,7 +36,10 @@ public class Recorder {
 	public Recorder() {
 		StringComparator c = new StringComparator();
 		recorder = new TreeMap<String, Cell>(c);
-		deserialize();
+
+		List<Cell> cells = DBRecorder.getCells();
+		for (Cell e : cells)
+			recorder.put(e.getData(), e);
 	}
 
 	/**
@@ -45,8 +50,9 @@ public class Recorder {
 	 */
 	public void input(String data) {
 		if (recorder.get(data) == null) {
-			recorder.put(data, new Cell(data));
-			serialize();
+			Cell cell = new Cell(data);
+			recorder.put(data, cell);
+			DBRecorder.addCell(cell);
 		}
 	}
 
@@ -65,15 +71,17 @@ public class Recorder {
 		if (clink == null) {
 			clink = new Cell(link);
 			recorder.put(link, clink);
+			DBRecorder.addCell(clink);
 		}
 		if (cmain == null) {
 			cmain = new Cell(main);
 			recorder.put(main, cmain);
+			DBRecorder.addCell(cmain);
 		}
 
 		clink.addDCell(cmain);
 		cmain.addDCell(clink);
-		serialize();
+		DBRecorder.addDLink(clink, cmain);
 	}
 
 	/**
@@ -94,20 +102,25 @@ public class Recorder {
 		if (clink == null) {
 			clink = new Cell(link);
 			recorder.put(link, clink);
+			DBRecorder.addCell(clink);
 		}
 		if (cmain == null) {
 			cmain = new Cell(main);
 			recorder.put(main, cmain);
+			DBRecorder.addCell(cmain);
 		}
 		if (cctr == null) {
 			cctr = new Cell(ctr);
 			recorder.put(ctr, cctr);
+			DBRecorder.addCell(cctr);
 		}
 
 		clink.addTriDCon(cmain, cctr);
 		cmain.addTriDCon(clink, cctr);
 		cctr.addTriCon(clink, cmain);
-		serialize();
+		DBRecorder.addDLink(clink, cmain);
+		DBRecorder.addLink(clink, cctr);
+		DBRecorder.addLink(cmain, cctr);
 	}
 
 	/**
@@ -127,6 +140,8 @@ public class Recorder {
 	/**
 	 * Serializes the recorder information to "data.csv".
 	 */
+	@Deprecated
+	@SuppressWarnings("unused")
 	private void serialize() {
 		try (FileOutputStream fos = new FileOutputStream("data.json"); JsonWriter writer = Json.createWriter(fos)) {
 			JsonBuilderFactory factory = Json.createBuilderFactory(null);
@@ -165,6 +180,8 @@ public class Recorder {
 	/**
 	 * Deserializes the recorder information in "data.csv" to the recorder.
 	 */
+	@Deprecated
+	@SuppressWarnings("unused")
 	private void deserialize() {
 		try (FileInputStream fis = new FileInputStream("data.json"); JsonReader reader = Json.createReader(fis)) {
 			JsonObject data = reader.readObject();

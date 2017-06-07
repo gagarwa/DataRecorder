@@ -9,14 +9,25 @@ import java.util.ArrayList;
  */
 public class Cell {
 
-	/** The list of connected cells. */
-	private ArrayList<Cell> con;
+	/**
+	 * The unique identification number of the cell for recording and database
+	 * management.
+	 */
+	private int id;
+
+	/**
+	 * The ID tracker for unique ID management.
+	 */
+	private static int ID = 1;
+
+	/** The data contained within the cell. */
+	private String data;
 
 	/** The list of double connected cells. */
 	private ArrayList<Cell> dcon;
 
-	/** The data contained within the cell. */
-	private String data;
+	/** The list of connected cells. */
+	private ArrayList<Cell> con;
 
 	/**
 	 * Creates a new cell with the data to store.
@@ -25,9 +36,11 @@ public class Cell {
 	 *            the data to store
 	 */
 	public Cell(String data) {
-		con = new ArrayList<Cell>();
-		dcon = new ArrayList<Cell>();
+		id = ID;
+		ID++;
 		this.data = data;
+		dcon = new ArrayList<Cell>();
+		con = new ArrayList<Cell>();
 	}
 
 	/**
@@ -101,15 +114,6 @@ public class Cell {
 	}
 
 	/**
-	 * Returns the list of connected cells.
-	 * 
-	 * @return the con
-	 */
-	public ArrayList<Cell> getCon() {
-		return con;
-	}
-
-	/**
 	 * Returns the list of double connected cells.
 	 * 
 	 * @return the dcon
@@ -119,12 +123,30 @@ public class Cell {
 	}
 
 	/**
+	 * Returns the list of connected cells.
+	 * 
+	 * @return the con
+	 */
+	public ArrayList<Cell> getCon() {
+		return con;
+	}
+
+	/**
 	 * Returns the data.
 	 * 
 	 * @return the data
 	 */
 	public String getData() {
 		return data;
+	}
+
+	/**
+	 * Returns the ID.
+	 * 
+	 * @return the ID
+	 */
+	public int getID() {
+		return id;
 	}
 
 	/**
