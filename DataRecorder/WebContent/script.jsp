@@ -9,7 +9,10 @@
 
 <svg width=1000 height=800></svg>
 <script>
-	var svg = d3.select("svg");
+	var svg = d3.select("svg").call(d3.zoom().on("zoom", function() {
+		svg.attr("transform", d3.event.transform)
+	}));
+
 	var width = svg.attr("width");
 	var height = svg.attr("height");
 
@@ -79,10 +82,10 @@
 	}
 
 	function getX(group, radians) {
-		return Math.cos(radians + group) * (group * 50) + (width / 2);
+		return Math.cos(radians + group) * (group * 80) + (width / 2);
 	}
 
 	function getY(group, radians) {
-		return Math.sin(radians + group) * (group * 50) + (height / 2);
+		return Math.sin(radians + group) * (group * 80) + (height / 2);
 	}
 </script>
