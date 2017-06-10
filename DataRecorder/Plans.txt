@@ -1,0 +1,20 @@
+Plans to further develop AI Recorder
+
+End Goals
+
+Have basically a text editor called Notes on right, where you can take notes.
+Then build tree on left of notes automatically, highlighting as you go the text that is and is not parsed.
+Allow search bar at top to search tree for terms.
+Report results of search below.
+
+In definitions or long text allow keyword input to connect them to their nodes or create them if non existent,
+and allow them to show up in searches.
+
+Also allow table building, so I can take one search (like for GDP), and aggregate it with another (like Population),
+with common terms (like Country) and report it in one table like format for readability.
+
+
+Will need title markings, and other markings for important nodes.
+Parenthesis for equivalence.
+
+Implement File saving and opening, without the use of the "common" SQL database.

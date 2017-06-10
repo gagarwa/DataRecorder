@@ -5,36 +5,67 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
 import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
 
 /**
- * A Database Connection to the MySQL Database Storage Engine.
+ * A Database Connection to the SQL database storage engine.
  *
  * @author Gitesh Agarwal
  */
-public class DBConnection {
+public class SQLConnection {
 
 	/**
-	 * The instance of a {@link DBConnection} to the MySQL Database for this
+	 * The SQL Database Storage Engine to connect to.
+	 */
+	public static final SQLDatabase SQL_Database = SQLDatabase.MicrosoftSQL;
+
+	/**
+	 * The instance of a {@link SQLConnection} to the SQL database for this
 	 * project.
 	 */
-	private static DBConnection instance;
+	private static SQLConnection instance;
 
 	/**
-	 * The Database Connection to the MySQL Database.
+	 * The Database Connection to the SQL database.
 	 */
 	private Connection connection;
 
 	/**
 	 * Creates a new Database Connection.
 	 */
-	private DBConnection() {
+	private SQLConnection() {
+		if (SQL_Database == SQLDatabase.MySQL)
+			createMySQLConnection();
+		else
+			createMSSQLConnection();
+	}
+
+	/**
+	 * Creates a new MySQL Database Connection.
+	 */
+	private void createMySQLConnection() {
 		try {
 			MysqlDataSource source = new MysqlDataSource();
 			source.setUser("root");
 			source.setPassword("");
 			source.setDatabaseName("recorder");
 			source.setCreateDatabaseIfNotExist(true);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Creates a new Microsoft SQL Database Connection.
+	 */
+	private void createMSSQLConnection() {
+		try {
+			SQLServerDataSource source = new SQLServerDataSource();
+			source.setUser("gagarwa");
+			source.setPassword("Sa!sa133");
+			source.setDatabaseName("recorder");
+			source.setServerName("recorder.database.windows.net");
 			connection = source.getConnection();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -42,19 +73,19 @@ public class DBConnection {
 	}
 
 	/**
-	 * Returns an instance of {@link DBConnection}.
+	 * Returns an instance of {@link SQLConnection}.
 	 * 
 	 * @return an instance of this class
 	 */
-	public static DBConnection getInstance() {
+	public static SQLConnection getInstance() {
 		if (instance == null)
-			return new DBConnection();
+			return new SQLConnection();
 		else
 			return instance;
 	}
 
 	/**
-	 * Returns the Database {@link Connection} to the MySQL Database.
+	 * Returns the Database {@link Connection} to the SQL database.
 	 * 
 	 * @return the connection
 	 */

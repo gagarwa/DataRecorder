@@ -20,8 +20,8 @@ public class Cell {
 	 */
 	private static int ID = 1;
 
-	/** The data contained within the cell. */
-	private String data;
+	/** The name of the cell. */
+	private String name;
 
 	/** The list of double connected cells. */
 	private ArrayList<Cell> dcon;
@@ -30,15 +30,15 @@ public class Cell {
 	private ArrayList<Cell> con;
 
 	/**
-	 * Creates a new cell with the data to store.
+	 * Creates a new cell.
 	 * 
-	 * @param data
-	 *            the data to store
+	 * @param name
+	 *            the cell name
 	 */
-	public Cell(String data) {
+	public Cell(String name) {
 		id = ID;
 		ID++;
-		this.data = data;
+		this.name = name;
 		dcon = new ArrayList<Cell>();
 		con = new ArrayList<Cell>();
 	}
@@ -132,16 +132,7 @@ public class Cell {
 	}
 
 	/**
-	 * Returns the data.
-	 * 
-	 * @return the data
-	 */
-	public String getData() {
-		return data;
-	}
-
-	/**
-	 * Returns the ID.
+	 * Returns the ID of the cell.
 	 * 
 	 * @return the ID
 	 */
@@ -150,24 +141,42 @@ public class Cell {
 	}
 
 	/**
+	 * Returns the name of the cell.
+	 * 
+	 * @return the name
+	 */
+	public String getName() {
+		return name;
+	}
+
+	/**
+	 * Returns the number of total links connected to this cell.
+	 * 
+	 * @return the number of links
+	 */
+	public int getLinks() {
+		return dcon.size() + con.size();
+	}
+
+	/**
 	 * Returns the output of the cell.
 	 * 
 	 * @return the output
 	 */
 	public String output() {
-		String s = data + "\n";
+		String s = name + "\n";
 		boolean connected = false;
 
 		for (Cell e : dcon) {
 			for (Cell n : con) {
 				if (e.isConnected(n)) {
 					connected = true;
-					s += e.getData() + " -> " + n.getData() + "\n";
+					s += e.getName() + " -> " + n.getName() + "\n";
 				}
 			}
 
 			if (!connected) {
-				s += e.getData() + "\n";
+				s += e.getName() + "\n";
 			}
 
 			connected = false;
@@ -178,7 +187,7 @@ public class Cell {
 			for (int j = i + 1; j < con.size(); j++) {
 				Cell n = con.get(j);
 				if (e.isDConnected(n)) {
-					s += e.getData() + " -> " + n.getData() + "\n";
+					s += e.getName() + " -> " + n.getName() + "\n";
 				}
 			}
 		}
@@ -193,22 +202,24 @@ public class Cell {
 	 */
 	@Override
 	public String toString() {
-		String s = data + " ";
-		s += "(Connections [";
+		String s = name + " ";
+		s += "[Link Count = " + getLinks() + ", ";
+
+		s += "Connections (";
 		if (dcon.isEmpty())
 			s += ", ";
 
 		for (Cell e : dcon)
-			s += e.getData() + ", ";
-		s = s.substring(0, s.length() - 2) + "])";
+			s += e.getName() + ", ";
+		s = s.substring(0, s.length() - 2) + "), ";
 
-		s += "(Links [";
+		s += "Links (";
 		if (con.isEmpty())
 			s += ", ";
 
 		for (Cell e : con)
-			s += e.getData() + ", ";
-		s = s.substring(0, s.length() - 2) + "])";
+			s += e.getName() + ", ";
+		s = s.substring(0, s.length() - 2) + ")]";
 		return s;
 	}
 

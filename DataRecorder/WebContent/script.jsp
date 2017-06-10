@@ -1,146 +1,88 @@
-<svg width="960" height="2000"></svg>
+<%@ page import="com.gagarwa.ai.recorder.AIRecorder"%>
+
 <script src="//d3js.org/d3.v4.min.js"></script>
+
+<%
+	AIRecorder air = (AIRecorder) session.getAttribute("air");
+	String recorderData = air.getRecorder().serialize();
+%>
+
+<svg width=1000 height=800></svg>
 <script>
+	var svg = d3.select("svg");
+	var width = svg.attr("width");
+	var height = svg.attr("height");
 
-var svg = d3.select("svg"),
-    width = +svg.attr("width"),
-    height = +svg.attr("height"),
-    g = svg.append("g").attr("transform", "translate(40,0)");
+	var graph =
+<%=recorderData%>
+	;
 
-var tree = d3.cluster()
-    .size([height, width - 160]);
+	var dlinks = svg.append("g").attr("class", "dlinks").selectAll("line").data(graph.dlinks)
+			.enter().append("line");
 
-var stratify = d3.stratify()
-    .parentId(function(d) { return d.id.substring(0, d.id.lastIndexOf(".")); });
+	dlinks.attr("x1", function(d) {
+		var node = getNode(d.source);
+		return getX(node.group, node.radians);
+	}).attr("y1", function(d) {
+		var node = getNode(d.source);
+		return getY(node.group, node.radians);
+	}).attr("x2", function(d) {
+		var node = getNode(d.target);
+		return getX(node.group, node.radians);
+	}).attr("y2", function(d) {
+		var node = getNode(d.target);
+		return getY(node.group, node.radians);
+	});
 
-d3.csv("flare.csv", function(error, data) {
-  if (error) throw error;
+	var links = svg.append("g").attr("class", "links").selectAll("line").data(graph.links).enter()
+			.append("line");
 
-  var root = stratify(data)
-      .sort(function(a, b) { return (a.height - b.height) || a.id.localeCompare(b.id); });
+	links.attr("x1", function(d) {
+		var node = getNode(d.source);
+		return getX(node.group, node.radians);
+	}).attr("y1", function(d) {
+		var node = getNode(d.source);
+		return getY(node.group, node.radians);
+	}).attr("x2", function(d) {
+		var node = getNode(d.target);
+		return getX(node.group, node.radians);
+	}).attr("y2", function(d) {
+		var node = getNode(d.target);
+		return getY(node.group, node.radians);
+	});
 
-  tree(root);
+	var nodes = svg.append("g").attr("class", "nodes").selectAll("circle").data(graph.cells)
+			.enter().append("circle");
 
-  var link = g.selectAll(".link")
-      .data(root.descendants().slice(1))
-    .enter().append("path")
-      .attr("class", "link")
-      .attr("d", function(d) {
-        return "M" + d.y + "," + d.x
-            + "C" + (d.parent.y + 100) + "," + d.x
-            + " " + (d.parent.y + 100) + "," + d.parent.x
-            + " " + d.parent.y + "," + d.parent.x;
-      });
+	nodes.attr("cx", function(d) {
+		return getX(d.group, d.radians);
+	}).attr("cy", function(d) {
+		return getY(d.group, d.radians);
+	}).attr("r", 30);
 
-  var node = g.selectAll(".node")
-      .data(root.descendants())
-    .enter().append("g")
-      .attr("class", function(d) { return "node" + (d.children ? " node--internal" : " node--leaf"); })
-      .attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; })
+	var text = svg.append("g").attr("class", "text").selectAll("text").data(graph.cells).enter()
+			.append("text");
 
-  node.append("circle")
-      .attr("r", 2.5);
+	text.attr("x", function(d) {
+		return getX(d.group, d.radians);
+	}).attr("y", function(d) {
+		return getY(d.group, d.radians);
+	}).text(function(d) {
+		return d.name;
+	});
 
-  node.append("text")
-      .attr("dy", 3)
-      .attr("x", function(d) { return d.children ? -8 : 8; })
-      .style("text-anchor", function(d) { return d.children ? "end" : "start"; })
-      .text(function(d) { return d.id.substring(d.id.lastIndexOf(".") + 1); });
-});
+	function getNode(name) {
+		for (var i = 0; i < graph.cells.length; i++)
+			if (graph.cells[i].name == name)
+				return graph.cells[i];
+		return 0;
+	}
 
+	function getX(group, radians) {
+		return Math.cos(radians + group) * (group * 50) + (width / 2);
+	}
+
+	function getY(group, radians) {
+		return Math.sin(radians + group) * (group * 50) + (height / 2);
+	}
 </script>
-
-<!DOCTYPE html>
-<meta charset="utf-8">
-<style>
-
-.links line {
-  stroke: #999;
-  stroke-opacity: 0.6;
-}
-
-.nodes circle {
-  stroke: #fff;
-  stroke-width: 1.5px;
-}
-
-</style>
-
-<svg width="960" height="600"></svg>
-<script>
-
-var svg = d3.select("svg"),
-    width = +svg.attr("width"),
-    height = +svg.attr("height");
-
-var color = d3.scaleOrdinal(d3.schemeCategory20);
-
-var simulation = d3.forceSimulation()
-    .force("link", d3.forceLink().id(function(d) { return d.id; }))
-    .force("charge", d3.forceManyBody())
-    .force("center", d3.forceCenter(width / 2, height / 2));
-
-d3.json("miserables.json", function(error, graph) {
-  if (error) throw error;
-
-  var link = svg.append("g")
-      .attr("class", "links")
-    .selectAll("line")
-    .data(graph.links)
-    .enter().append("line")
-      .attr("stroke-width", function(d) { return Math.sqrt(d.value); });
-
-  var node = svg.append("g")
-      .attr("class", "nodes")
-    .selectAll("circle")
-    .data(graph.nodes)
-    .enter().append("circle")
-      .attr("r", 5)
-      .attr("fill", function(d) { return color(d.group); })
-      .call(d3.drag()
-          .on("start", dragstarted)
-          .on("drag", dragged)
-          .on("end", dragended));
-
-  node.append("title")
-      .text(function(d) { return d.id; });
-
-  simulation
-      .nodes(graph.nodes)
-      .on("tick", ticked);
-
-  simulation.force("link")
-      .links(graph.links);
-
-  function ticked() {
-    link
-        .attr("x1", function(d) { return d.source.x; })
-        .attr("y1", function(d) { return d.source.y; })
-        .attr("x2", function(d) { return d.target.x; })
-        .attr("y2", function(d) { return d.target.y; });
-
-    node
-        .attr("cx", function(d) { return d.x; })
-        .attr("cy", function(d) { return d.y; });
-  }
-});
-
-function dragstarted(d) {
-  if (!d3.event.active) simulation.alphaTarget(0.3).restart();
-  d.fx = d.x;
-  d.fy = d.y;
-}
-
-function dragged(d) {
-  d.fx = d3.event.x;
-  d.fy = d3.event.y;
-}
-
-function dragended(d) {
-  if (!d3.event.active) simulation.alphaTarget(0);
-  d.fx = null;
-  d.fy = null;
-}
-
-</script>
-

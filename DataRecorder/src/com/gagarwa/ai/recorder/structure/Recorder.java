@@ -1,8 +1,9 @@
 package com.gagarwa.ai.recorder.structure;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -16,7 +17,7 @@ import javax.json.JsonReader;
 import javax.json.JsonString;
 import javax.json.JsonWriter;
 
-import com.gagarwa.ai.recorder.structure.storage.DBRecorder;
+import com.gagarwa.ai.recorder.structure.storage.SQLRecorder;
 
 /**
  * The recorder and manager of the data.
@@ -37,9 +38,9 @@ public class Recorder {
 		StringComparator c = new StringComparator();
 		recorder = new TreeMap<String, Cell>(c);
 
-		List<Cell> cells = DBRecorder.getCells();
+		List<Cell> cells = SQLRecorder.getCells();
 		for (Cell e : cells)
-			recorder.put(e.getData(), e);
+			recorder.put(e.getName(), e);
 	}
 
 	/**
@@ -52,7 +53,7 @@ public class Recorder {
 		if (recorder.get(data) == null) {
 			Cell cell = new Cell(data);
 			recorder.put(data, cell);
-			DBRecorder.addCell(cell);
+			SQLRecorder.addCell(cell);
 		}
 	}
 
@@ -71,17 +72,17 @@ public class Recorder {
 		if (clink == null) {
 			clink = new Cell(link);
 			recorder.put(link, clink);
-			DBRecorder.addCell(clink);
+			SQLRecorder.addCell(clink);
 		}
 		if (cmain == null) {
 			cmain = new Cell(main);
 			recorder.put(main, cmain);
-			DBRecorder.addCell(cmain);
+			SQLRecorder.addCell(cmain);
 		}
 
 		clink.addDCell(cmain);
 		cmain.addDCell(clink);
-		DBRecorder.addDLink(clink, cmain);
+		SQLRecorder.addDLink(clink, cmain);
 	}
 
 	/**
@@ -102,25 +103,25 @@ public class Recorder {
 		if (clink == null) {
 			clink = new Cell(link);
 			recorder.put(link, clink);
-			DBRecorder.addCell(clink);
+			SQLRecorder.addCell(clink);
 		}
 		if (cmain == null) {
 			cmain = new Cell(main);
 			recorder.put(main, cmain);
-			DBRecorder.addCell(cmain);
+			SQLRecorder.addCell(cmain);
 		}
 		if (cctr == null) {
 			cctr = new Cell(ctr);
 			recorder.put(ctr, cctr);
-			DBRecorder.addCell(cctr);
+			SQLRecorder.addCell(cctr);
 		}
 
 		clink.addTriDCon(cmain, cctr);
 		cmain.addTriDCon(clink, cctr);
 		cctr.addTriCon(clink, cmain);
-		DBRecorder.addDLink(clink, cmain);
-		DBRecorder.addLink(clink, cctr);
-		DBRecorder.addLink(cmain, cctr);
+		SQLRecorder.addDLink(clink, cmain);
+		SQLRecorder.addLink(clink, cctr);
+		SQLRecorder.addLink(cmain, cctr);
 	}
 
 	/**
@@ -138,52 +139,89 @@ public class Recorder {
 	}
 
 	/**
-	 * Serializes the recorder information to "data.csv".
+	 * Serializes the recorder information to a JSON String.
+	 *
+	 * @return the recorder information
 	 */
-	@Deprecated
-	@SuppressWarnings("unused")
-	private void serialize() {
-		try (FileOutputStream fos = new FileOutputStream("data.json"); JsonWriter writer = Json.createWriter(fos)) {
+	public String serialize() {
+		try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); JsonWriter writer = Json.createWriter(baos)) {
+			List<Cell> cellList = new ArrayList<Cell>(recorder.values());
 			JsonBuilderFactory factory = Json.createBuilderFactory(null);
+
+			cellList.sort(new LinkComparator());
+			List<Integer> linkGroup = new ArrayList<Integer>();
+			List<Integer> linkCount = new ArrayList<Integer>();
+			int nlinks = cellList.get(0).getLinks();
+			int count = 0;
+			for (Cell e : cellList) {
+				if (nlinks == e.getLinks())
+					count++;
+				else {
+					linkGroup.add(nlinks);
+					linkCount.add(count);
+					nlinks = e.getLinks();
+					count = 1;
+				}
+			}
+			linkGroup.add(nlinks);
+			linkCount.add(count);
+
 			JsonArrayBuilder builder = factory.createArrayBuilder();
-			for (String e : recorder.keySet())
-				builder.add(e);
+			int group = 0;
+			int i = 0;
+			for (Cell e : cellList) {
+				JsonObjectBuilder cbuilder = factory.createObjectBuilder();
+				if (group != linkGroup.indexOf(e.getLinks())) {
+					group++;
+					i = 1;
+				} else
+					i++;
+				cbuilder.add("name", e.getName());
+				cbuilder.add("group", group + 1);
+				cbuilder.add("radians", (double) i * (2 * Math.PI) / linkCount.get(group));
+				builder.add(cbuilder.build());
+			}
 			JsonArray cells = builder.build();
 
-			JsonObjectBuilder obuilder = factory.createObjectBuilder();
-			for (Cell e : recorder.values()) {
-				JsonArrayBuilder cbuilder = factory.createArrayBuilder();
-				for (Cell c : e.getDCon())
-					cbuilder.add(c.getData());
-				obuilder.add(e.getData(), cbuilder.build());
-			}
-			JsonObject dlinks = obuilder.build();
+			cellList.sort(new IDComparator());
+			List<Link> linkList = SQLRecorder.getLinks(cellList);
+			JsonArrayBuilder builderDL = factory.createArrayBuilder();
+			JsonArrayBuilder builderL = factory.createArrayBuilder();
 
-			obuilder = factory.createObjectBuilder();
-			for (Cell e : recorder.values()) {
-				JsonArrayBuilder cbuilder = factory.createArrayBuilder();
-				for (Cell c : e.getCon())
-					cbuilder.add(c.getData());
-				obuilder.add(e.getData(), cbuilder.build());
+			for (Link e : linkList) {
+				JsonObjectBuilder cbuilder = factory.createObjectBuilder();
+				cbuilder.add("source", e.getSource());
+				cbuilder.add("target", e.getTarget());
+				if (e.getLinkType() == LinkType.DLINK)
+					builderDL.add(cbuilder.build());
+				else // LINK
+					builderL.add(cbuilder.build());
 			}
-			JsonObject links = obuilder.build();
+			JsonArray dlinks = builderDL.build();
+			JsonArray links = builderL.build();
 
 			JsonObject data = factory.createObjectBuilder().add("cells", cells).add("dlinks", dlinks)
 					.add("links", links).build();
 			writer.writeObject(data);
-			writer.close();
+
+			baos.flush();
+			return baos.toString();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+
+		return null;
 	}
 
 	/**
-	 * Deserializes the recorder information in "data.csv" to the recorder.
+	 * Deserializes the recorder information from a JSON String to the recorder.
+	 * 
+	 * @param recorderData
+	 *            the JSON String
 	 */
-	@Deprecated
-	@SuppressWarnings("unused")
-	private void deserialize() {
-		try (FileInputStream fis = new FileInputStream("data.json"); JsonReader reader = Json.createReader(fis)) {
+	public void deserialize(String recorderData) {
+		try (ByteArrayInputStream bais = new ByteArrayInputStream(recorderData.getBytes());
+				JsonReader reader = Json.createReader(bais)) {
 			JsonObject data = reader.readObject();
 			JsonArray cells = data.getJsonArray("cells");
 			JsonObject dlinks = data.getJsonObject("dlinks");
@@ -206,7 +244,6 @@ public class Recorder {
 				for (JsonString s : conData)
 					recorder.get(e.toString()).addCell(recorder.get(s.getString()));
 			}
-			reader.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

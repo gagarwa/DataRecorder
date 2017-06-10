@@ -99,6 +99,15 @@ public class AIRecorder {
 	}
 
 	/**
+	 * Returns the AI recorder system.
+	 * 
+	 * @return the AI recorder system
+	 */
+	public Recorder getRecorder() {
+		return air;
+	}
+
+	/**
 	 * The main implementation of the AI recorder.
 	 * 
 	 * @param args

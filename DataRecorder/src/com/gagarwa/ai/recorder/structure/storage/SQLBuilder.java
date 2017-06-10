@@ -14,25 +14,25 @@ import java.util.Scanner;
  * 
  * @author Gitesh Agarwal
  */
-public class DBBuilder {
+public class SQLBuilder {
 
 	/**
-	 * The main implementation of {@link DBBuilder} that rebuilds the database.
+	 * The main implementation of {@link SQLBuilder} that rebuilds the database.
 	 * 
 	 * @param args
 	 *            command line arguments (not used)
 	 */
 	public static void main(String[] args) {
-		DBBuilder.rebuild();
+		SQLBuilder.rebuild();
 	}
 
 	/**
 	 * Rebuilds the sample database.
 	 */
 	public static void rebuild() {
-		DBBuilder.dropTables();
-		DBBuilder.createTables();
-		DBBuilder.insertValues();
+		SQLBuilder.dropTables();
+		SQLBuilder.createTables();
+		SQLBuilder.insertValues();
 
 	}
 
@@ -41,8 +41,8 @@ public class DBBuilder {
 	 * database tables.
 	 */
 	public static void dropTables() {
-		InputStream stream = DBBuilder.class.getResourceAsStream("dropTables.sql");
-		DBBuilder.executeSQLFile(stream);
+		InputStream stream = SQLBuilder.class.getResourceAsStream("dropTables.sql");
+		SQLBuilder.executeSQLFile(stream);
 	}
 
 	/**
@@ -50,8 +50,13 @@ public class DBBuilder {
 	 * database tables.
 	 */
 	public static void createTables() {
-		InputStream stream = DBBuilder.class.getResourceAsStream("createTables.sql");
-		DBBuilder.executeSQLFile(stream);
+		InputStream stream;
+		if (SQLConnection.SQL_Database == SQLDatabase.MySQL)
+			stream = SQLBuilder.class.getResourceAsStream("createTablesMySQL.sql");
+		else
+			stream = SQLBuilder.class.getResourceAsStream("createTablesMSSQL.sql");
+
+		SQLBuilder.executeSQLFile(stream);
 	}
 
 	/**
@@ -59,8 +64,8 @@ public class DBBuilder {
 	 * database with sample cells.
 	 */
 	public static void insertValues() {
-		InputStream stream = DBBuilder.class.getResourceAsStream("insertValues.sql");
-		DBBuilder.executeSQLFile(stream);
+		InputStream stream = SQLBuilder.class.getResourceAsStream("insertValues.sql");
+		SQLBuilder.executeSQLFile(stream);
 	}
 
 	/**
@@ -71,7 +76,7 @@ public class DBBuilder {
 	 */
 	public static void executeSQLFile(File sqlFile) {
 		try (FileInputStream stream = new FileInputStream(sqlFile)) {
-			DBBuilder.executeSQLFile(stream);
+			SQLBuilder.executeSQLFile(stream);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -85,7 +90,7 @@ public class DBBuilder {
 	 */
 	public static void executeSQLFile(InputStream stream) {
 		List<String> stmts = parseSQLFile(stream);
-		DBConnection conn = DBConnection.getInstance();
+		SQLConnection conn = SQLConnection.getInstance();
 
 		for (String stmt : stmts) {
 			conn.executeUpdate(stmt);

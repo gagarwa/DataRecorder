@@ -1,0 +1,15 @@
+CREATE TABLE cells (
+	cellID INT NOT NULL IDENTITY,
+	name TEXT NOT NULL,
+	PRIMARY KEY (cellID)
+);
+
+CREATE TABLE links (
+	linkID BIGINT NOT NULL IDENTITY,
+	linkType VARCHAR(5) NOT NULL,
+	source TEXT NOT NULL,
+	sourceID INT NOT NULL,
+	target TEXT NOT NULL,
+	targetID INT NOT NULL,
+	PRIMARY KEY (linkID)
+);
